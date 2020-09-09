@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Resume</title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+
+<link href="../default.css" rel="stylesheet" type="text/css" media="all" />
+<script src="pathGame.js"></script>
+</head>
+    
+<body>
+    
+<div id="page" class="container">
+	<div id="header">
+		<div id="logo">
+			<img src="images/pic02.jpg" alt="" />
+			<h1><a href="#">Pathing Pro</a></h1>
+		</div>
+		<div id="menu">
+			<ul>
+				<li><a href="../index.html" accesskey="1" title="">Home</a></li>
+				<li><a href="../aboutMe.html" accesskey="2" title="">About Me</a></li>
+				<li><a href="../resume.html" accesskey="3" title="">Resume</a></li>
+				<li><a href="../projects.html" accesskey="4" title="">Projects</a></li>
+                <li><a href="../feedback.html" accesskey="5" title"">Feedback</a></li>
+			</ul>
+		</div>
+	</div>
+	<div id="main">
+		<div id="banner">
+			<!-- <img src="images/pic01.jpg" alt="" class="image-full" /> -->
+		</div>
+		<div id="welcome">
+			<div class="title">
+				<h2>Pathing Program</h2>
+			</div>
+            
+		</div>
+		<div id="bodyText">
+            <h3>About the Pathing Program</h3>
+            <p>This web based program was designed to teach about some of the most common pathing algorithms and provide a visual reference for how those algorithms are working behind the scene.</p>
+            
+            <div style="float: left; width: 20%">Pathing Type: <select name="sortType" id="pathT">
+                <option value="BFS">Breadth First Search</option> <!--Dijkstra's Algorithm-->
+                <option value="IDF">Iterative Deepening Search</option>
+                <option value="IDF">Bidirectional IDS</option>
+                <option value="Astar">A* Search</option>
+                </select>
+            </div>
+            <div style="float: left; width: 55%;">
+                Visual Path Speed: <span id="speedValue"></span>
+                <input type="range" style="width: 100%" min="1" max="100" value="1" id="pathSpeed">
+                <br>Visual Node Density: <span id="densValue"></span>
+                <input type="range" style="width: 100%" min="1" max="50" value="1" id="pathDens">
+            </div>
+            <div style="float: right; width: 20%">
+                <button type="button" onclick="startButton()">Random Start</button>&emsp;&emsp;
+                <button type="button" onclick="cancelFun()">Stop</button>
+            </div>
+            <div style="display: inline-block; width: 2000px;"><br></div>
+            <span id="test">Steps taken:</span><span id="test2"></span>
+			<div id="gameBox"></div>
+            
+            <p>See the Code:&ensp;<a href="https://github.com/anthonyEShay/webSorter" target="_blank"><img height= "20px" src="../images/github-logo.png"></a></p>
+		</div>
+	</div>
+</div>
+    <script>
+        startGame(10, 70, "BFS", "Random");
+        var sortSlide = document.getElementById("pathSpeed");
+        var denSlide = document.getElementById("pathDens");
+        document.getElementById("speedValue").innerHTML = sortSlide.value;
+        document.getElementById("densValue").innerHTML = denSlide.value;
+        
+        sortSlide.oninput = function() {
+            document.getElementById("speedValue").innerHTML = this.value;
+            tempSpeed = document.getElementById("pathSpeed").value;
+            tempSpeed = Math.round(1000/tempSpeed);
+            changeTimer(tempSpeed);
+        }
+        denSlide.oninput = function(){
+            document.getElementById("densValue").innerHTML = this.value;
+        }
+        function startButton(){
+            tempDens = document.getElementById("pathDens").value;
+            tempDens = Math.round(tempDens*3.53 + 6.47);
+            tempWid = Math.round(2200 / (3*tempDens + 1));
+            aString = intervalTimer.toString() + " " + tempDens.toString() + " " + tempWid.toString();
+            //document.getElementById("test").innerHTML = aString;
+            startGame(tempDens, tempWid, document.getElementById("pathT").value, "Random");
+        }
+    </script>
+</body>
+</html>
