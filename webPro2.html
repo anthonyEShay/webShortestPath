@@ -51,10 +51,10 @@
                 </select>
             </div>
             <div style="float: left; width: 55%;">
-                Visual Path Speed: <span id="speedValue"></span>
+                <div style="float: left">Visual Path Speed:&emsp;</div> <div id="speedValue" style="width: 25px; float: left"></div>&emsp;&emsp;&emsp;&emsp;<span ><button id="spButton" type="button" onclick="changeSkip()">x1</button></span>
                 <input type="range" style="width: 100%" min="1" max="100" value="1" id="pathSpeed">
                 <br>Visual Node Density: <span id="densValue"></span>
-                <input type="range" style="width: 100%" min="1" max="50" value="1" id="pathDens">
+                <input type="range" style="width: 100%" min="10" max="150" value="10" id="pathDens">
             </div>
             <div style="float: right; width: 20%">
                 <button type="button" onclick="startButton()">Random Start</button>&emsp;&emsp;
@@ -64,19 +64,19 @@
             <span id="test">Steps taken:</span><span id="test2"></span>
 			<div id="gameBox"></div>
             
-            <p>See the Code:&ensp;<a href="https://github.com/anthonyEShay/webSorter" target="_blank"><img height= "20px" src="../images/github-logo.png"></a></p>
+            <p>See the Code:&ensp;<a href="https://github.com/anthonyEShay/webShortestPath" target="_blank"><img height= "20px" src="../images/github-logo.png"></a></p>
 		</div>
 	</div>
 </div>
     <script>
-        startGame(10, 70, "BFS", "Random");
+        startGame(10, "BFS", "Random");
         var sortSlide = document.getElementById("pathSpeed");
         var denSlide = document.getElementById("pathDens");
         document.getElementById("speedValue").innerHTML = sortSlide.value;
         document.getElementById("densValue").innerHTML = denSlide.value;
         
         sortSlide.oninput = function() {
-            document.getElementById("speedValue").innerHTML = this.value;
+            document.getElementById("speedValue").innerHTML = sortSlide.value;
             tempSpeed = document.getElementById("pathSpeed").value;
             tempSpeed = Math.round(1000/tempSpeed);
             changeTimer(tempSpeed);
@@ -85,12 +85,17 @@
             document.getElementById("densValue").innerHTML = this.value;
         }
         function startButton(){
-            tempDens = document.getElementById("pathDens").value;
-            tempDens = Math.round(tempDens*3.53 + 6.47);
-            tempWid = Math.round(2200 / (3*tempDens + 1));
-            aString = intervalTimer.toString() + " " + tempDens.toString() + " " + tempWid.toString();
-            //document.getElementById("test").innerHTML = aString;
-            startGame(tempDens, tempWid, document.getElementById("pathT").value, "Random");
+            startGame(document.getElementById("pathDens").value, document.getElementById("pathT").value, "Random");
+        }
+        
+        function changeSkip(){
+            skipOrder = [1, 2, 4, 6];
+            curValue = document.getElementById("spButton").innerHTML;
+            curValue = curValue.substr(1);
+            temp = skipOrder.indexOf(parseInt(curValue)) + 1;
+            temp = temp == skipOrder.length ? 0 : temp;
+            skipSpeed = skipOrder[temp]
+            document.getElementById("spButton").innerHTML = "x" + skipOrder[temp];
         }
     </script>
 </body>

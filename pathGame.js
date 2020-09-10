@@ -7,45 +7,122 @@ var currentPos = 0;
 var stepCounter = 0;
 var numberCols = 0;
 var numberRows = 0;
+var skipSpeed = 1;
+var skipCounter = 0;
 
-function startGame(numElements, density, gameType, mapType) {
+function adjustBoxes(numBoxes, mapSize, atype){
+    numBoxes = parseInt(numBoxes);
+    mapSize = parseInt(mapSize);
+    atype = parseInt(atype);
+    boxDensity = numBoxes;
+    if(atype == 1){
+        density = Math.floor((mapSize*2) / (3*numBoxes + 1));
+        boxDensity = density;
+    }else{
+        density = numBoxes;
+    }
+    numberLevels = mapSize - Math.floor(.5*density);
+    numberLevels = numberLevels/(density + Math.floor(.5*density));
+    overage = Math.ceil(numberLevels) * (density + Math.floor(.5*density)) - (mapSize - 2);
+    
+    console.log(overage + " " + Math.ceil(numberLevels) + " " + density*1.5);
+    console.log(Math.floor(.35*density - 2)*Math.ceil(numberLevels));
+    
+    yFix = 0;
+    if ( overage >= Math.floor(.35*density - 2)*Math.ceil(numberLevels)){
+        numberLevels = Math.floor(numberLevels);
+    }else{
+        numberLevels = Math.ceil(numberLevels);
+        while(true){
+            yFix += 1;
+            if (yFix * numberLevels >= overage){
+                break;
+            }
+        }
+        while (true){
+            overage = Math.ceil(numberLevels) * (density + Math.floor(.5*density) - yFix) - (mapSize - 2);
+            if(overage < 0 && overage * -1 > (density + Math.floor(.5*density) - yFix)){
+                numberLevels += 1;
+            }else{
+                break;
+            }
+        }
+        density = density - yFix;
+    }
+    returnList = [numberLevels, density, boxDensity];
+    return returnList;
+}
+
+function startGame(numElements, gameType, mapType) {
     elementArray = [];
     pathNode = [];
     currentPos = 0;
     stepCounter = 0;
-    numberCols = numElements;
-    xPosition = Math.floor(density/2);
-    yPosition = Math.floor(density/2);
-    numberLevels = 600 - .5*density;
-    numberLevels = Math.floor(numberLevels/(density*1.5));
-    numberRows = numberLevels;
-    console.log(numberLevels);
+    skipCounter = 0;
+    numberCols = parseInt(numElements);
+    
+    xValues = adjustBoxes(numberCols, 1100, 1);
+    yValues = adjustBoxes(xValues[2], 600, 2);
+    
+    xPosition = Math.floor(xValues[1]/2);
+    yPosition = Math.floor(yValues[1]/2);
+    
+    numberCols = xValues[0];
+    numberRows = yValues[0];
+    
     numCounter = 0;
-    for (a = 0; a < numberLevels; a++){
-        for (i = 0; i < numElements; i++){
-            temp = new component(density, density, "gray", xPosition, yPosition, numCounter);
-            xPosition += density + Math.floor(density/2);
+    for (a = 0; a < numberRows; a++){
+        for (i = 0; i < numberCols; i++){
+            temp = new component(xValues[2], xValues[2], "gray", xPosition, yPosition, numCounter);
+            xPosition += xValues[1] + Math.floor(xValues[1]/2);
             elementArray.push(temp);
             numCounter += 1;
         }
-        xPosition = Math.floor(density/2);
-        yPosition += density + Math.floor(density/2);
+        xPosition = Math.floor(xValues[1]/2);
+        yPosition += xValues[1] + Math.floor(yValues[1]/2);
     }
+    
+    console.log("Levels: " + numberLevels + " Total: " + elementArray.length);
     if (mapType == "Random"){
-        console.log("Col/Row: " + String(numberRows) + " " + String(numberCols));
-        ahalf = Math.floor(numberCols / 2);
+        console.log("Row: " + String(numberRows) + " Col: " + String(numberCols));
+        ahalf = Math.floor(numberCols / 3);
         tempCol = Math.floor(Math.random()*(ahalf))
         tempRow = Math.floor(Math.random()*(numberRows))
         console.log("Col/Row: " + String(tempCol) + " " + String(tempRow))
         elementArray[tempCol + tempRow*numberCols].startPoint = true;
         currentPos = tempCol + tempRow*numberCols;
         
-        tempCol = Math.floor(Math.random()*(numberCols - ahalf) + ahalf);
+        tempCol = numberCols - 1 - Math.floor(Math.random()*(ahalf));
         tempRow = Math.floor(Math.random()*(numberRows))
         console.log("Col/Row: " + String(tempCol) + " " + String(tempRow))
         elementArray[tempCol + tempRow*numberCols].endPoint = true;
         
-        //Draw a wall, change up above into thirds so middle remains empty
+        //Draw a wall
+        tempCol = Math.floor(Math.random()*(ahalf)) + ahalf;
+        wallSize = Math.floor((2/3)* numberRows);
+        beginElement = tempCol + numberCols*(numberRows - 1);
+        for(i = 0; i < wallSize; i++){
+            elementArray[beginElement].wall = true;
+            beginElement -= numberCols;
+        }
+        
+        tempCol2 = Math.floor(Math.random()*(ahalf)) + ahalf;
+        if(tempCol - tempCol2 <= 1 && tempCol - tempCol2 >= -1){
+            if(tempCol - tempCol2 == 0){
+                tempCol += 2;
+            }else{
+                tempCol += 2 * (tempCol - tempCol2);
+            }
+        }else{
+            tempCol = tempCol2
+        }
+        wallSize = Math.floor((2/3)* numberRows);
+        beginElement = tempCol;
+        for(i = 0; i < wallSize; i++){
+            console.log(i + " " + beginElement);
+            elementArray[beginElement].wall = true;
+            beginElement += numberCols;
+        }
     }
     verifyClear(gameType);
     myGameArea.start(gameType);
@@ -81,7 +158,11 @@ function BFSUpdate(){
     elementArray[currentPos].visited = true;
     if (elementArray[currentPos].endPoint == true){
         stepCounter += 1;
+        for (x of pathNode){
+            elementArray[x].finalPath = true;
+        }
         updateGameArea();
+        frontier = [];
         cancelFun();
         return;
     }
@@ -95,7 +176,13 @@ function BFSUpdate(){
     //If expanded element is endpoint, set correct path, currentPos = endpoint, empty frontier
     
     stepCounter += 1;
-    updateGameArea();
+    skipCounter += 1;
+    if(skipCounter != skipSpeed){
+        BFSUpdate();
+    }else{
+        updateGameArea();
+        skipCounter = 0;
+    }
 }
 
 function expandDirection(sArray, direction){
@@ -104,22 +191,35 @@ function expandDirection(sArray, direction){
     tempCol = curElement - tempRow * numberCols;
     if(direction == "top"){
         testElement = curElement - numberCols;
+        try{
         if( testElement < 0 || elementArray[testElement].wall || explored.includes(testElement)){
             return null;
         }
         explored.push(testElement);
         sArray.push(testElement);
         frontier.push(sArray);
+        }
+        catch(err){
+            console.log(err);
+            console.log("Error: " + typeof testElement + ", " + typeof curElement + ", " + typeof numberCols);
+        }
         return;
     }
     if(direction == "bot"){
         testElement = curElement + numberCols;
+        try{
         if(testElement >= elementArray.length || elementArray[testElement].wall || explored.includes(testElement)){
             return null;
         }
         explored.push(testElement);
         sArray.push(testElement);
         frontier.push(sArray);
+        }
+        catch(err){
+            console.log(err);
+            console.log("Error: " + typeof testElement + ", " + typeof curElement + ", " + typeof numberCols);
+            console.log("Error: " + testElement + ", " + curElement + ", " + numberCols);
+        }
         return;
     }
     if( direction == "left"){
@@ -203,6 +303,7 @@ function component(width, height, color, x, y, pNumber) {
     this.visited = false;
     this.startPoint = false;
     this.endPoint = false;
+    this.finalPath = false;
     //Unused ( No Touch, Wall, Visited) or part of Path
     this.update = function(aBorder){
         
@@ -212,7 +313,9 @@ function component(width, height, color, x, y, pNumber) {
         }else if(this.startPoint){
             ctx.fillStyle = "yellow";
         }else if(this.endPoint){
-            ctx.fillStyle = "orange";
+            ctx.fillStyle = "red";
+        }else if (this.finalPath){
+            ctx.fillStyle = "blue";
         }else if (this.visited){
             ctx.fillStyle = "green";
         }else{
