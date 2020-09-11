@@ -59,9 +59,11 @@
             <div style="float: right; width: 20%">
                 <button type="button" onclick="startButton()">Random Start</button>&emsp;&emsp;
                 <button type="button" onclick="cancelFun()">Stop</button>
+                <br><br>
+                <button type="button" onclick="chooseLayout()">Choose Layout</button>
             </div>
             <div style="display: inline-block; width: 2000px;"><br></div>
-            <span id="test">Steps taken:</span><span id="test2"></span>
+            <span id="test">Steps taken:</span><span id="test2"></span><span id="test3"></span>
 			<div id="gameBox"></div>
             
             <p>See the Code:&ensp;<a href="https://github.com/anthonyEShay/webShortestPath" target="_blank"><img height= "20px" src="../images/github-logo.png"></a></p>
@@ -86,6 +88,37 @@
         }
         function startButton(){
             startGame(document.getElementById("pathDens").value, document.getElementById("pathT").value, "Random");
+        }
+        
+        async function chooseLayout(){
+            startGame(document.getElementById("pathDens").value, document.getElementById("pathT").value, "User");
+            document.getElementById("test3").innerHTML = "    Pick a starting square";
+            lastClick[0] = false;
+            while(lastClick[0] == false){
+                await sleep(100);
+            }
+            spot = lastClick[1]
+            elementArray[spot].startPoint = true;
+            currentPos = spot;
+            updateGameArea();
+            
+            document.getElementById("test3").innerHTML = "    Pick an endpoint square";
+            lastClick[0] = false;
+            while(lastClick[0] == false){
+                await sleep(100);
+            }
+            spot = lastClick[1]
+            elementArray[spot].endPoint = true;
+            updateGameArea();
+            
+            document.getElementById("test3").innerHTML = "";
+            gameType = document.getElementById("pathT").value;
+            verifyClear(gameType);
+            myGameArea.start(gameType);
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
         }
         
         function changeSkip(){

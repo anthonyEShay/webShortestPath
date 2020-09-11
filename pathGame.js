@@ -53,6 +53,47 @@ function adjustBoxes(numBoxes, mapSize, atype){
     return returnList;
 }
 
+function drawRanWalls(numberRows, numberCols){
+    console.log("Row: " + String(numberRows) + " Col: " + String(numberCols));
+    ahalf = Math.floor(numberCols / 3);
+    tempCol = Math.floor(Math.random()*(ahalf))
+    tempRow = Math.floor(Math.random()*(numberRows))
+    console.log("Col/Row: " + String(tempCol) + " " + String(tempRow))
+    elementArray[tempCol + tempRow*numberCols].startPoint = true;
+    currentPos = tempCol + tempRow*numberCols;
+
+    tempCol = numberCols - 1 - Math.floor(Math.random()*(ahalf));
+    tempRow = Math.floor(Math.random()*(numberRows))
+    console.log("Col/Row: " + String(tempCol) + " " + String(tempRow))
+    elementArray[tempCol + tempRow*numberCols].endPoint = true;
+
+    //Draw a wall
+    tempCol = Math.floor(Math.random()*(ahalf)) + ahalf;
+    wallSize = Math.floor((2/3)* numberRows);
+    beginElement = tempCol + numberCols*(numberRows - 1);
+    for(i = 0; i < wallSize; i++){
+        elementArray[beginElement].wall = true;
+        beginElement -= numberCols;
+    }
+
+    tempCol2 = Math.floor(Math.random()*(ahalf)) + ahalf;
+    if(tempCol - tempCol2 <= 1 && tempCol - tempCol2 >= -1){
+        if(tempCol - tempCol2 == 0){
+            tempCol += 2;
+        }else{
+            tempCol += 2 * (tempCol - tempCol2);
+        }
+    }else{
+        tempCol = tempCol2
+    }
+    wallSize = Math.floor((2/3)* numberRows);
+    beginElement = tempCol;
+    for(i = 0; i < wallSize; i++){
+        elementArray[beginElement].wall = true;
+        beginElement += numberCols;
+    }
+}
+
 function startGame(numElements, gameType, mapType) {
     elementArray = [];
     pathNode = [];
@@ -84,49 +125,16 @@ function startGame(numElements, gameType, mapType) {
     
     console.log("Levels: " + numberLevels + " Total: " + elementArray.length);
     if (mapType == "Random"){
-        console.log("Row: " + String(numberRows) + " Col: " + String(numberCols));
-        ahalf = Math.floor(numberCols / 3);
-        tempCol = Math.floor(Math.random()*(ahalf))
-        tempRow = Math.floor(Math.random()*(numberRows))
-        console.log("Col/Row: " + String(tempCol) + " " + String(tempRow))
-        elementArray[tempCol + tempRow*numberCols].startPoint = true;
-        currentPos = tempCol + tempRow*numberCols;
-        
-        tempCol = numberCols - 1 - Math.floor(Math.random()*(ahalf));
-        tempRow = Math.floor(Math.random()*(numberRows))
-        console.log("Col/Row: " + String(tempCol) + " " + String(tempRow))
-        elementArray[tempCol + tempRow*numberCols].endPoint = true;
-        
-        //Draw a wall
-        tempCol = Math.floor(Math.random()*(ahalf)) + ahalf;
-        wallSize = Math.floor((2/3)* numberRows);
-        beginElement = tempCol + numberCols*(numberRows - 1);
-        for(i = 0; i < wallSize; i++){
-            elementArray[beginElement].wall = true;
-            beginElement -= numberCols;
-        }
-        
-        tempCol2 = Math.floor(Math.random()*(ahalf)) + ahalf;
-        if(tempCol - tempCol2 <= 1 && tempCol - tempCol2 >= -1){
-            if(tempCol - tempCol2 == 0){
-                tempCol += 2;
-            }else{
-                tempCol += 2 * (tempCol - tempCol2);
-            }
-        }else{
-            tempCol = tempCol2
-        }
-        wallSize = Math.floor((2/3)* numberRows);
-        beginElement = tempCol;
-        for(i = 0; i < wallSize; i++){
-            console.log(i + " " + beginElement);
-            elementArray[beginElement].wall = true;
-            beginElement += numberCols;
-        }
+        drawRanWalls(numberRows, numberCols);
+        verifyClear(gameType);
+        myGameArea.start(gameType);
+    }else{
+        cancelFun();
+        verifyClear(gameType);
+        updateGameArea();
     }
-    verifyClear(gameType);
-    myGameArea.start(gameType);
 }
+
 
 function returnGame(gameType){
     if (gameType == "BFS"){
@@ -265,6 +273,7 @@ var myGameArea = {
         this.canvas.style.border = "2px solid";
         this.context = this.canvas.getContext("2d");
         this.gameT = gameType;
+        this.canvas.addEventListener('click', gotClick, false);
         /*
         this.addEventListener('click', function(event){
             var x = event.pageX - elemLeft, y = event.pageY - elemTop;
@@ -293,6 +302,34 @@ var myGameArea = {
     }
 }
 
+var lastClick = [false, -1];
+function gotClick(event){
+    //console.log(event);
+    leftMargin = myGameArea.canvas.offsetLeft + myGameArea.canvas.clientLeft;
+    topMargin = myGameArea.canvas.offsetTop + myGameArea.canvas.clientTop;
+    actualLeft = event.pageX - leftMargin;
+    actualTop = event.pageY - topMargin;
+    console.log("GameX: " + actualLeft + " GameY: " + actualTop);
+    actualElement = findElement(actualLeft, actualTop);
+    console.log(actualElement);
+    if(actualElement != -1){
+        lastClick = [true, actualElement];
+    }
+}
+
+function findElement(posX, posY){
+    for(x of elementArray){
+        xRange = [x.x, x.x + x.width];
+        if(xRange[0] <= posX && posX <= xRange[1]){
+            yRange = [x.y, x.y + x.height];
+            if(yRange[0] <= posY && posY <= yRange[1]){
+                return x.posNumber;
+            }
+        }
+    }
+    return -1;
+}
+
 function component(width, height, color, x, y, pNumber) {
     this.width = width;
     this.height = height;
@@ -308,12 +345,12 @@ function component(width, height, color, x, y, pNumber) {
     this.update = function(aBorder){
         
         ctx = myGameArea.context;
-        if (this.wall){
-            ctx.fillStyle = "black";
-        }else if(this.startPoint){
+        if(this.startPoint){
             ctx.fillStyle = "yellow";
         }else if(this.endPoint){
             ctx.fillStyle = "red";
+        }else if (this.wall){
+            ctx.fillStyle = "black";
         }else if (this.finalPath){
             ctx.fillStyle = "blue";
         }else if (this.visited){
@@ -350,10 +387,6 @@ function updateGameArea() {
             x.update(3);
         }
         aCount += 1;
-    }
-    currentPos += 1;
-    if (currentPos == elementArray.length){
-        currentPos = 0;
     }
     aString = " " + stepCounter.toString();
     document.getElementById("test2").innerHTML = aString;
