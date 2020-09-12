@@ -52,7 +52,7 @@
             </div>
             <div style="float: left; width: 55%;">
                 <div style="float: left">Visual Path Speed:&emsp;</div> <div id="speedValue" style="width: 25px; float: left"></div>&emsp;&emsp;&emsp;&emsp;<span ><button id="spButton" type="button" onclick="changeSkip()">x1</button></span>
-                <input type="range" style="width: 100%" min="1" max="100" value="1" id="pathSpeed">
+                <input type="range" style="width: 100%" min="1" max="100" value="4" id="pathSpeed">
                 <br>Visual Node Density: <span id="densValue"></span>
                 <input type="range" style="width: 100%" min="10" max="150" value="10" id="pathDens">
             </div>
@@ -63,7 +63,7 @@
                 <button type="button" onclick="chooseLayout()">Choose Layout</button>
             </div>
             <div style="display: inline-block; width: 2000px;"><br></div>
-            <span id="test">Steps taken:</span><span id="test2"></span><span id="test3"></span>
+            <span id="test">Steps taken:</span><span id="test2"></span><span id="test3"></span><span id="test4"></span>
 			<div id="gameBox"></div>
             
             <p>See the Code:&ensp;<a href="https://github.com/anthonyEShay/webShortestPath" target="_blank"><img height= "20px" src="../images/github-logo.png"></a></p>
@@ -71,11 +71,12 @@
 	</div>
 </div>
     <script>
-        startGame(10, "BFS", "Random");
         var sortSlide = document.getElementById("pathSpeed");
         var denSlide = document.getElementById("pathDens");
         document.getElementById("speedValue").innerHTML = sortSlide.value;
         document.getElementById("densValue").innerHTML = denSlide.value;
+        changeTimer(250);
+        startGame(10, "BFS", "Random");
         
         sortSlide.oninput = function() {
             document.getElementById("speedValue").innerHTML = sortSlide.value;
@@ -90,9 +91,11 @@
             startGame(document.getElementById("pathDens").value, document.getElementById("pathT").value, "Random");
         }
         
+        buttonClick = false;
+        
         async function chooseLayout(){
             startGame(document.getElementById("pathDens").value, document.getElementById("pathT").value, "User");
-            document.getElementById("test3").innerHTML = "    Pick a starting square";
+            document.getElementById("test3").innerHTML = "<b>&emsp;Pick a starting square</b>";
             lastClick[0] = false;
             while(lastClick[0] == false){
                 await sleep(100);
@@ -102,7 +105,7 @@
             currentPos = spot;
             updateGameArea();
             
-            document.getElementById("test3").innerHTML = "    Pick an endpoint square";
+            document.getElementById("test3").innerHTML = "<b>&emsp;Pick an endpoint square</b>";
             lastClick[0] = false;
             while(lastClick[0] == false){
                 await sleep(100);
@@ -111,10 +114,48 @@
             elementArray[spot].endPoint = true;
             updateGameArea();
             
+            document.getElementById("test3").innerHTML = "<b>&emsp;Drag to draw walls, click to pick or revert single square</b>";
+            document.getElementById("test4").innerHTML = "&emsp;&emsp;<button type='button' onclick='customStart()'>Start</button>";
+            
+            buttonClick = false;
+            dragTracking = true;
+            lastClick[0] = false;
+            while (buttonClick == false){
+                if(lastClick[0] == true && !dragCondition){
+                    spot = lastClick[1];
+                    lastClick[0] = false;
+                    elementArray[spot].wall = elementArray[spot].wall == true ? false : true;
+                    updateGameArea();
+                    await sleep(100);
+                }else{
+                    if(dragCondition){
+                        spot = dragPosition[2];
+                        if(spot != -1){
+                            elementArray[spot].wall = true;
+                            updateGameArea();
+                        }
+                    }
+                    await sleep(50);
+                }
+            }
+            
+        }
+        
+        async function chooseDrag(){
+            while(buttonClick == false){
+                
+            }
+        }
+        
+        function customStart(){
+            buttonClick = true;
+            dragTracking = false;
             document.getElementById("test3").innerHTML = "";
+            document.getElementById("test4").innerHTML = "";
             gameType = document.getElementById("pathT").value;
             verifyClear(gameType);
             myGameArea.start(gameType);
+            updateGameArea();
         }
         
         function sleep(ms) {

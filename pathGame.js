@@ -128,6 +128,7 @@ function startGame(numElements, gameType, mapType) {
         drawRanWalls(numberRows, numberCols);
         verifyClear(gameType);
         myGameArea.start(gameType);
+        updateGameArea();
     }else{
         cancelFun();
         verifyClear(gameType);
@@ -273,18 +274,11 @@ var myGameArea = {
         this.canvas.style.border = "2px solid";
         this.context = this.canvas.getContext("2d");
         this.gameT = gameType;
-        this.canvas.addEventListener('click', gotClick, false);
-        /*
-        this.addEventListener('click', function(event){
-            var x = event.pageX - elemLeft, y = event.pageY - elemTop;
-            elementArray.forEach(function(element) {
-                if (y > element.top && y < element.top + element.height 
-                    && x > element.left && x < element.left + element.width) {
-                    alert('clicked an element');
-                }
-            });
-        }, false); 
-        */
+        //this.canvas.addEventListener('click', gotClick, false);
+        this.canvas.addEventListener('mousedown', dragStart, false);
+        this.canvas.addEventListener('mouseup', dragOver, false);
+        this.canvas.addEventListener('mouseleave', dragOver, false);
+        this.canvas.addEventListener('mousemove', gotDrag, false);
         div = document.getElementById("gameBox");
         div.appendChild(this.canvas);
         clearInterval(this.interval);
@@ -302,20 +296,71 @@ var myGameArea = {
     }
 }
 
-var lastClick = [false, -1];
+
 function gotClick(event){
     //console.log(event);
     leftMargin = myGameArea.canvas.offsetLeft + myGameArea.canvas.clientLeft;
     topMargin = myGameArea.canvas.offsetTop + myGameArea.canvas.clientTop;
     actualLeft = event.pageX - leftMargin;
     actualTop = event.pageY - topMargin;
-    console.log("GameX: " + actualLeft + " GameY: " + actualTop);
+    //console.log("GameX: " + actualLeft + " GameY: " + actualTop);
     actualElement = findElement(actualLeft, actualTop);
-    console.log(actualElement);
-    if(actualElement != -1){
+    //console.log(actualElement);
+    if(actualElement != -1 && !dragPosition[3]){
         lastClick = [true, actualElement];
+        dragCondition = false;
+    }else{
+        dragCondition = false;
+        dragPosition[3] = false;
     }
 }
+
+var lastClick = [false, -1];
+var dragCounter = 0;
+var dragTracking = false;
+var dragCondition = false;
+function dragStart(event){
+    dragCounter = 0;
+    if(dragTracking){
+        dragCondition = true;
+    }
+}
+
+var dragPosition = [-1, -1, -1, false];
+function gotDrag(event){
+    if (!dragCondition){
+        return;
+    }
+    if(dragPosition[0] != event.pageX || dragPosition[1] != event.pageY){
+        if(dragCounter < 3){
+            dragCounter++;
+            return;
+        }
+        leftMargin = myGameArea.canvas.offsetLeft + myGameArea.canvas.clientLeft;
+        topMargin = myGameArea.canvas.offsetTop + myGameArea.canvas.clientTop;
+        actualLeft = event.pageX - leftMargin;
+        actualTop = event.pageY - topMargin;
+        actualElement = findElement(actualLeft, actualTop);
+        dragPosition = [event.pageX, event.pageY, actualElement, true];
+        //console.log(actualElement);
+    }
+}
+
+function dragOver(event){
+    dragCondition = false;
+    if (dragCounter < 3){
+        leftMargin = myGameArea.canvas.offsetLeft + myGameArea.canvas.clientLeft;
+        topMargin = myGameArea.canvas.offsetTop + myGameArea.canvas.clientTop;
+        actualLeft = event.pageX - leftMargin;
+        actualTop = event.pageY - topMargin;
+        //console.log("GameX: " + actualLeft + " GameY: " + actualTop);
+        actualElement = findElement(actualLeft, actualTop);
+        if(actualElement != -1){
+            lastClick = [true, actualElement];
+        }
+    }
+}
+
 
 function findElement(posX, posY){
     for(x of elementArray){
