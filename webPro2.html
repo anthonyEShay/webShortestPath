@@ -42,11 +42,11 @@
 		<div id="bodyText">
             <h3>About the Pathing Program</h3>
             <p>This web based program was designed to teach about some of the most common pathing algorithms and provide a visual reference for how those algorithms are working behind the scene.</p>
-            
+            <div id="pathText"></div>
             <div style="float: left; width: 20%">Pathing Type: <select name="sortType" id="pathT">
                 <option value="BFS">Breadth First Search</option> <!--Dijkstra's Algorithm-->
-                <option value="IDF">Iterative Deepening Search</option>
-                <option value="IDF">Bidirectional IDS</option>
+                <option value="IDS">Iterative Deepening Search</option>
+                <option value="BIDS">Bidirectional IDS</option>
                 <option value="Astar">A* Search</option>
                 </select>
             </div>
@@ -73,6 +73,7 @@
     <script>
         var sortSlide = document.getElementById("pathSpeed");
         var denSlide = document.getElementById("pathDens");
+        var pathType = document.getElementById("pathT");
         document.getElementById("speedValue").innerHTML = sortSlide.value;
         document.getElementById("densValue").innerHTML = denSlide.value;
         changeTimer(250);
@@ -86,6 +87,23 @@
         }
         denSlide.oninput = function(){
             document.getElementById("densValue").innerHTML = this.value;
+        }
+        pathType.oninput = function(){
+            pathName = document.getElementById("pathT").value;
+            switch (pathName){
+                case 'BFS':
+                    document.getElementById("pathText").innerHTML = bfsString;
+                    break;
+                case 'IDS':
+                    document.getElementById("pathText").innerHTML = idsString;
+                    break;
+                case 'BIDS':
+                    document.getElementById("pathText").innerHTML = bidsString;
+                    break;
+                case 'Astar':
+                    document.getElementById("pathText").innerHTML = astarString;
+                    break;
+            }
         }
         function startButton(){
             startGame(document.getElementById("pathDens").value, document.getElementById("pathT").value, "Random");
@@ -171,6 +189,16 @@
             skipSpeed = skipOrder[temp]
             document.getElementById("spButton").innerHTML = "x" + skipOrder[temp];
         }
+        
+        bfsString = "<h3>Breadth First Search</h3><p>Insertion sort is another O(n<sup>2</sup>) sorting algorithm but it tends to perform better than most other O(n<sup>2</sup>) algorithms like selection and bubble sort. This is in part due to its efficiency with data sets that begin substantially sorted. The algorithm works like selection sort in that it divides the data up into a sorted and unsorted section. For every element in the unsorted section the algorithm goes through the sorted data to find where the element belongs and then places it in the correct section. In substantially sorted data the algorithm will often be able to simply place that element at one of the ends of the sorted section and not have to traverse into the data to find a correct position.</p>"
+        
+        idsString = "<h3>Iterative Deepening Search</h3><p>Heapsort is an efficient O(n log n) sorting algorithm that makes use of special data structure known as a  heap in order to dramatically improve its performance. In functions similarly to selection sort in that it separates the data into a sorted and unsorted section. The differences end their because heapsort then transforms the unsorted section into a heap data structure. The heap structure is designed so that it will always have either the highest or lowest value element at the top of the structure. This means, unlike in selection sort, the algorithm no longer needs to iterate through the entirety of the unsorted section to find the next element to sort.</p>"
+        
+        bidsString = "<h3>Bidirectional Iterative Deepening Search</h3><p>Quicksort is an efficient O(n log n) sorting algorithm that utilizes a divide-and-conquer style strategy to effectively split the data into smaller more manageable sections. The algorithm works by repeatedly choosing an element to work around. The algorithm goes through its current working section and moves all elements less in size to one side and all those greater to the other side. The algorithm then divides up both sides into smaller subsections that then each have a new pivot chosen and are then sorted in the same way.</p>"
+        
+        astarString = "<h3>A* Search</h3><p>Merge sort is an efficient O(n log n) sorting algorithm that, like quicksort, utilizes a divide-and-conquer style strategy to effectively split the data into smaller more manageable sections. The algorithm first divides up the data into smaller and smaller sections until each section is only 1 element large. The algorithm then begins to merge these sections together two at a time and in order. So, every two sections will be merged into one larger sorted section. This continues until the last two sections remaining are merged back into the full data set.</p>"
+        
+        document.getElementById("pathText").innerHTML = bfsString;
     </script>
 </body>
 </html>

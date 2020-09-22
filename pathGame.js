@@ -4,6 +4,7 @@ var intervalTimer = 1000;
 var elementArray = [];
 var pathNode = [];
 var currentPos = 0;
+var currentPos2 = -1;
 var stepCounter = 0;
 var numberCols = 0;
 var numberRows = 0;
@@ -98,6 +99,7 @@ function startGame(numElements, gameType, mapType) {
     elementArray = [];
     pathNode = [];
     currentPos = 0;
+    currentPos2 = -1;
     stepCounter = 0;
     skipCounter = 0;
     numberCols = parseInt(numElements);
@@ -141,14 +143,46 @@ function returnGame(gameType){
     if (gameType == "BFS"){
         return BFSUpdate;
     }
+    if (gameType == "IDS"){
+        return IDSUpdate;
+    }
+    if (gameType == "BIDS"){
+        return BIDSUpdate;
+    }
 }
 
 function verifyClear(gameType){
     if(gameType == "BFS"){
         frontier = [];
-        explored = [];
         frontier.push([currentPos]);
-        explored.push(currentPos);
+    }
+    if(gameType == "IDS"){
+        frontier = [];
+        idfDepthLevel = 1;
+        progressMade = [0, 0];
+        frontier.push([currentPos]);
+        idsStartPoint = currentPos;
+    }
+    if(gameType == "BIDS"){
+        frontier = [];
+        idfDepthLevel = 1;
+        progressMade = [0, 0];
+        frontier.push([currentPos]);
+        idsStartPoint = currentPos;
+        progressMadeEnd = [0, 0];
+        idsEndPoint = 0;
+        frontierEnd = [];
+        for(x of elementArray){
+            if(x.endPoint){
+                idsEndPoint = x.posNumber;
+                break;
+            }
+        }
+        frontierEnd.push([idsEndPoint]);
+        currentPos2 = idsEndPoint;
+        exhaustedL1 = [];
+        exhaustedL2 = [];
+        triggerV = -1;
     }
 }
 
@@ -162,12 +196,11 @@ function BFSUpdate(){
     //Take top path list off of the frontier, make it current path(pathNode), make last of path current pos and set as visited
     topPath = frontier[0];
     frontier.splice(0, 1);
-    pathNode = topPath;
     currentPos = topPath[topPath.length - 1];
     elementArray[currentPos].visited = true;
     if (elementArray[currentPos].endPoint == true){
         stepCounter += 1;
-        for (x of pathNode){
+        for (x of topPath){
             elementArray[x].finalPath = true;
         }
         updateGameArea();
@@ -177,10 +210,34 @@ function BFSUpdate(){
     }
     
     //expand left/right/top/down if element not exist in explored, add new created paths to end of frontier
-    expandDirection(topPath.slice(), "top");
-    expandDirection(topPath.slice(), "left");
-    expandDirection(topPath.slice(), "bot");
-    expandDirection(topPath.slice(), "right");
+    temp = expandDirection(topPath.slice(), "top");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            frontier.push(temp);
+        }
+    }
+    temp = expandDirection(topPath.slice(), "left");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            frontier.push(temp);
+        }
+    }
+    temp = expandDirection(topPath.slice(), "bot");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            frontier.push(temp);
+        }
+    }
+    temp = expandDirection(topPath.slice(), "right");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            frontier.push(temp);
+        }
+    }
     
     //If expanded element is endpoint, set correct path, currentPos = endpoint, empty frontier
     
@@ -194,6 +251,340 @@ function BFSUpdate(){
     }
 }
 
+idfDepthLevel = 0;
+progressMade = [];
+idsStartPoint = 0;
+function IDSUpdate(){
+    if (frontier.length == 0 && progressMade[0] == progressMade[1]){
+        //frontier is empty and pM1 (max length reached last run) pM0 = previous max length reached
+        cancelFun();
+        return;
+    }
+    if(frontier.length == 0){
+        progressMade[0] = progressMade[1];
+        progressMade[1] = 0;
+        for(x of elementArray){
+            x.visited = false;
+            x.reachNumber = -1;
+        }
+        currentPos = idsStartPoint;
+        frontier = [];
+        frontier.push([currentPos]);
+        idfDepthLevel += 1;
+    }
+    
+    topPath = frontier[frontier.length - 1];
+    frontier.splice(frontier.length - 1, 1);
+    if(topPath.length > progressMade[1]){
+        progressMade[1] = topPath.length;
+    }
+    currentPos = topPath[topPath.length - 1];
+    elementArray[currentPos].visited = true;
+    if (elementArray[currentPos].endPoint == true){
+        stepCounter += 1;
+        for (x of topPath){
+            elementArray[x].finalPath = true;
+        }
+        updateGameArea();
+        frontier = [];
+        progressMade = [0, 0];
+        cancelFun();
+        return;
+    }
+    
+    
+    temp = expandDirection(topPath.slice(), "top");
+    if(temp != null && temp.length <= idfDepthLevel){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            frontier.push(temp);
+        }
+    }
+    temp = expandDirection(topPath.slice(), "left");
+    if(temp != null && temp.length <= idfDepthLevel){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            frontier.push(temp);
+        }
+    }
+    temp = expandDirection(topPath.slice(), "bot");
+    if(temp != null && temp.length <= idfDepthLevel){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            frontier.push(temp);
+        }
+    }
+    temp = expandDirection(topPath.slice(), "right");
+    if(temp != null && temp.length <= idfDepthLevel){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            frontier.push(temp);
+        }
+    }
+    
+    stepCounter += 1;
+    skipCounter += 1;
+    if(skipCounter != skipSpeed){
+        IDSUpdate();
+    }else{
+        updateGameArea();
+        skipCounter = 0;
+    }
+}
+
+progressMadeEnd = [];
+idsEndPoint = 0;
+frontierEnd = [];
+exhaustedL1 = [];
+exhaustedL2 = [];
+triggerV = 0
+function BIDSUpdate(){
+    //Do IDS on start node, do IDS on end node. If at any time one finds a square that is visited and not in expanded (start IDS) or in expanded (end IDS)
+    //Search is complete, look in correct frontier for path that contains that element number, connect the paths into one and set it as final path
+    if (frontier.length == 0 && frontierEnd.length == 0 && progressMade[0] == progressMade[1] && progressMadeEnd[0] == progressMadeEnd[1]){
+        cancelFun();
+        return;
+    }
+    if(frontier.length == 0 && frontierEnd.length == 0){
+        if(triggerV != -1){
+            goodPath = findBestPath();
+            stepCounter += 1;
+            for (x of goodPath){
+                elementArray[x].finalPath = true;
+            }
+            updateGameArea();
+            frontier = []; frontierEnd = [];
+            progressMade = [0, 0]; progressMadeEnd = [0, 0];
+            cancelFun();
+            return;
+        }
+        progressMade[0] = progressMade[1];
+        progressMade[1] = 0;
+        progressMadeEnd[0] = progressMadeEnd[1];
+        progressMadeEnd[1] = 0;
+        
+        for(x of elementArray){
+            x.visited = false;
+            x.reachNumber = -1;
+            x.reachNumber2 = -1;
+        }
+        currentPos = idsStartPoint;
+        currentPos2 = idsEndPoint;
+        frontier = [];
+        explored = [];
+        frontier.push([currentPos]);
+        explored.push(currentPos);
+        frontierEnd = [];
+        frontierEnd.push([currentPos2]);
+        idfDepthLevel += 1;
+        exhaustedL1 = [];
+        exhaustedL2 = [];
+    }
+    
+    idsReturn = idsStep(frontier, progressMade, 1);
+    if(idsReturn[0] == 1){
+        triggerV = idsReturn[1][idsReturn[1].length - 1];
+        console.log("Trigger1: " + triggerV);
+    }
+    if(idsReturn[0] == 2){
+        stepCounter += 1;
+        for (x of idsReturn[1]){
+            elementArray[x].finalPath = true;
+        }
+        updateGameArea();
+        frontier = []; frontierEnd = [];
+        progressMade = [0, 0]; progressMadeEnd = [0, 0];
+        cancelFun();
+        return;
+    }
+    
+    idsReturn = idsStep(frontierEnd, progressMadeEnd, 2);
+    if(idsReturn[0] == 1){
+        triggerV = idsReturn[1][idsReturn[1].length - 1];
+        console.log("Trigger2: " + triggerV);
+    }
+    if(idsReturn[0] == 2){
+        stepCounter += 1;
+        for (x of idsReturn[1]){
+            elementArray[x].finalPath = true;
+        }
+        updateGameArea();
+        frontier = []; frontierEnd = [];
+        progressMade = [0, 0]; progressMadeEnd = [0, 0];
+        cancelFun();
+        return;
+    }
+    
+    stepCounter += 1;
+    skipCounter += 1;
+    if(skipCounter != skipSpeed){
+        BIDSUpdate();
+    }else{
+        updateGameArea();
+        skipCounter = 0;
+    }
+}
+//Array for each that holds a chain once dead/thrown out
+//When triggered mark trigger point
+//Both halves finish searching and at end both dead path lists checked and one with shortest route to trigger point is made a final path
+
+function findBestPath(){
+    maxValue = myGameArea.canvas.width * myGameArea.canvas.height;
+    workArray = [maxValue, -1]; //distance, position
+    workArray2 = [maxValue, -1];
+    count = 0;
+    for(x of exhaustedL1){
+        testing = x.indexOf(triggerV);
+        if(testing != -1){
+            if(testing < workArray[0]){
+                workArray[0] = testing;
+                workArray[1] = count;
+            }
+        }
+        count++;
+    }
+    count = 0;
+    for(x of exhaustedL2){
+        testing = x.indexOf(triggerV);
+        if(testing != -1){
+            if(testing < workArray2[0]){
+                workArray2[0] = testing;
+                workArray2[1] = count;
+            }
+        }
+        count++;
+    }
+    console.log(workArray + " : " + exhaustedL1.length);
+    console.log(workArray2 + " : " + exhaustedL2.length);
+    
+    temp1 = exhaustedL1[workArray[1]].slice(0, workArray[0]);
+    temp2 = exhaustedL2[workArray2[1]].slice(0, workArray2[0] + 1);
+    temp2.reverse();
+    console.log(temp1.concat(temp2).join());
+    return temp1.concat(temp2);
+}
+
+function idsStep(frontier, progressMade, posNum ){
+    if(frontier.length == 0){
+        return [0, null];
+    }
+    topPath = frontier[frontier.length - 1];
+    frontier.splice(frontier.length - 1, 1);
+    if(topPath.length > progressMade[1]){
+        progressMade[1] = topPath.length;
+    }
+    if(posNum == 1){
+        currentPos = topPath[topPath.length - 1];
+        workingPos = currentPos;
+    }else{
+        currentPos2 = topPath[topPath.length - 1];
+        workingPos = currentPos2;
+    }
+    
+    returnValue = 0
+    if (posNum == 1 && elementArray[workingPos].endPoint == true){
+        return [2, topPath];
+    }
+    if (posNum == 1 && elementArray[workingPos].visited && !explored.includes(workingPos)){
+        returnValue = 1; //return [1, topPath];
+        console.log(topPath.join());
+    }
+    
+    if(posNum == 2 && elementArray[workingPos].startPoint == true){
+        return [2, topPath];
+    }
+    if (posNum == 2 && explored.includes(workingPos)){
+        returnValue = 1; //return [1, topPath];
+        console.log(topPath.join());
+    }
+    
+    elementArray[workingPos].visited = true;
+    if(posNum == 1 && !explored.includes(workingPos)){
+        explored.push(workingPos);
+    }
+    
+    doesContinue = 0;
+    if(posNum == 1){
+        temp = expandDirection(topPath.slice(), "top");
+        if(temp != null && temp.length <= idfDepthLevel){
+            if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+                elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+                frontier.push(temp);
+                doesContinue++;
+            }
+        }
+        temp = expandDirection(topPath.slice(), "left");
+        if(temp != null && temp.length <= idfDepthLevel){
+            if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+                elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+                frontier.push(temp);
+                doesContinue++;
+            }
+        }
+        temp = expandDirection(topPath.slice(), "bot");
+        if(temp != null && temp.length <= idfDepthLevel){
+            if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+                elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+                frontier.push(temp);
+                doesContinue++;
+            }
+        }
+        temp = expandDirection(topPath.slice(), "right");
+        if(temp != null && temp.length <= idfDepthLevel){
+            if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+                elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+                frontier.push(temp);
+                doesContinue++;
+            }
+        }
+    }else{
+        temp = expandDirection(topPath.slice(), "top");
+        if(temp != null && temp.length <= idfDepthLevel){
+            if(elementArray[temp[temp.length - 1]].reachNumber2 > temp.length || elementArray[temp[temp.length - 1]].reachNumber2 == -1){
+                elementArray[temp[temp.length - 1]].reachNumber2 = temp.length;
+                frontier.push(temp);
+                doesContinue++;
+            }
+        }
+        temp = expandDirection(topPath.slice(), "left");
+        if(temp != null && temp.length <= idfDepthLevel){
+            if(elementArray[temp[temp.length - 1]].reachNumber2 > temp.length || elementArray[temp[temp.length - 1]].reachNumber2 == -1){
+                elementArray[temp[temp.length - 1]].reachNumber2 = temp.length;
+                frontier.push(temp);
+                doesContinue++;
+            }
+        }
+        temp = expandDirection(topPath.slice(), "bot");
+        if(temp != null && temp.length <= idfDepthLevel){
+            if(elementArray[temp[temp.length - 1]].reachNumber2 > temp.length || elementArray[temp[temp.length - 1]].reachNumber2 == -1){
+                elementArray[temp[temp.length - 1]].reachNumber2 = temp.length;
+                frontier.push(temp);
+                doesContinue++;
+            }
+        }
+        temp = expandDirection(topPath.slice(), "right");
+        if(temp != null && temp.length <= idfDepthLevel){
+            if(elementArray[temp[temp.length - 1]].reachNumber2 > temp.length || elementArray[temp[temp.length - 1]].reachNumber2 == -1){
+                elementArray[temp[temp.length - 1]].reachNumber2 = temp.length;
+                frontier.push(temp);
+                doesContinue++;
+            }
+        }
+    }
+    
+    
+    if(doesContinue == 0 && posNum == 1){
+        exhaustedL1.push(topPath.slice());
+    }else if (doesContinue == 0){
+        exhaustedL2.push(topPath.slice());
+    }
+    if(returnValue == 1){
+        return [1, topPath];
+    }else{
+        return [0, null];
+    }
+}
+
 function expandDirection(sArray, direction){
     curElement = sArray[sArray.length - 1];
     tempRow = Math.floor(curElement / numberCols);
@@ -201,55 +592,47 @@ function expandDirection(sArray, direction){
     if(direction == "top"){
         testElement = curElement - numberCols;
         try{
-        if( testElement < 0 || elementArray[testElement].wall || explored.includes(testElement)){
+        if( testElement < 0 || elementArray[testElement].wall || sArray.includes(testElement)){
             return null;
         }
-        explored.push(testElement);
         sArray.push(testElement);
-        frontier.push(sArray);
         }
         catch(err){
             console.log(err);
             console.log("Error: " + typeof testElement + ", " + typeof curElement + ", " + typeof numberCols);
         }
-        return;
+        return sArray;
     }
     if(direction == "bot"){
         testElement = curElement + numberCols;
         try{
-        if(testElement >= elementArray.length || elementArray[testElement].wall || explored.includes(testElement)){
+        if(testElement >= elementArray.length || elementArray[testElement].wall || sArray.includes(testElement)){
             return null;
         }
-        explored.push(testElement);
         sArray.push(testElement);
-        frontier.push(sArray);
         }
         catch(err){
             console.log(err);
             console.log("Error: " + typeof testElement + ", " + typeof curElement + ", " + typeof numberCols);
             console.log("Error: " + testElement + ", " + curElement + ", " + numberCols);
         }
-        return;
+        return sArray;
     }
     if( direction == "left"){
         testElement = curElement - 1;
-        if(tempCol == 0 || elementArray[testElement].wall || explored.includes(testElement)){
+        if(tempCol == 0 || elementArray[testElement].wall || sArray.includes(testElement)){
             return null;
         }
-        explored.push(testElement);
         sArray.push(testElement);
-        frontier.push(sArray);
-        return;
+        return sArray;
     }
     if(direction == "right"){
         testElement = curElement + 1;
-        if(tempCol == numberCols - 1 || elementArray[testElement].wall || explored.includes(testElement)){
+        if(tempCol == numberCols - 1 || elementArray[testElement].wall || sArray.includes(testElement)){
             return null;
         }
-        explored.push(testElement);
         sArray.push(testElement);
-        frontier.push(sArray);
-        return;
+        return sArray;
     }
 }
 
@@ -383,6 +766,8 @@ function component(width, height, color, x, y, pNumber) {
     this.posNumber = pNumber;
     this.wall = false;
     this.visited = false;
+    this.reachNumber = -1;
+    this.reachNumber2 = -1;
     this.startPoint = false;
     this.endPoint = false;
     this.finalPath = false;
@@ -424,7 +809,7 @@ function updateGameArea() {
     myGameArea.clear();
     aCount = 0;
     for (x of elementArray){
-        if (aCount == currentPos){
+        if (aCount == currentPos || aCount == currentPos2){
             x.update(1);
         }else if(pathNode.includes(x.posNumber)){//element is part of pathNode
             x.update(2);
