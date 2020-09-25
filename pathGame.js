@@ -149,6 +149,12 @@ function returnGame(gameType){
     if (gameType == "BIDS"){
         return BIDSUpdate;
     }
+    if (gameType == "Greed"){
+        return GreedyUpdate;
+    }
+    if (gameType == "Astar"){
+        return AstarUpdate;
+    }
 }
 
 function verifyClear(gameType){
@@ -183,6 +189,30 @@ function verifyClear(gameType){
         exhaustedL1 = [];
         exhaustedL2 = [];
         triggerV = -1;
+    }
+    if(gameType == "Greed"){
+        frontier = [];
+        idsEndPoint = 0;
+        for(x of elementArray){
+            if(x.endPoint){
+                idsEndPoint = x.posNumber;
+                break;
+            }
+        }
+        value = getHeuristic(currentPos);
+        frontier.push([value, [currentPos]]);
+    }
+    if(gameType == "Astar"){
+        frontier = [];
+        idsEndPoint = 0;
+        for(x of elementArray){
+            if(x.endPoint){
+                idsEndPoint = x.posNumber;
+                break;
+            }
+        }
+        value = getHeuristic(currentPos);
+        frontier.push([value, [currentPos]]);
     }
 }
 
@@ -646,6 +676,158 @@ function swapElements(pos1, pos2){
 function fixPositions(aCount){
     for(i = 0; i < aCount; i++){
         elementArray[i].x = positionLog[i];
+    }
+}
+
+
+function GreedyUpdate(){
+    if (frontier.length == 0){
+        cancelFun();
+        return;
+    }
+    //Take top path list off of the frontier, make it current path(pathNode), make last of path current pos and set as visited
+    topPath = frontier[0];
+    frontier.splice(0, 1);
+    currentPos = topPath[1][topPath[1].length - 1];
+    elementArray[currentPos].visited = true;
+    if (elementArray[currentPos].endPoint == true){
+        stepCounter += 1;
+        for (x of topPath[1]){
+            elementArray[x].finalPath = true;
+        }
+        updateGameArea();
+        frontier = [];
+        cancelFun();
+        return;
+    }
+    
+    //expand left/right/top/down if element not exist in explored, add new created paths to end of frontier
+    temp = expandDirection(topPath[1].slice(), "top");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            addAstarValue(temp, 0);
+        }
+    }
+    temp = expandDirection(topPath[1].slice(), "left");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            addAstarValue(temp, 0);
+        }
+    }
+    temp = expandDirection(topPath[1].slice(), "bot");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            addAstarValue(temp, 0);
+        }
+    }
+    temp = expandDirection(topPath[1].slice(), "right");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            addAstarValue(temp, 0);
+        }
+    }
+    
+    //If expanded element is endpoint, set correct path, currentPos = endpoint, empty frontier
+    
+    stepCounter += 1;
+    skipCounter += 1;
+    if(skipCounter != skipSpeed){
+        BFSUpdate();
+    }else{
+        updateGameArea();
+        skipCounter = 0;
+    }
+}
+
+function addAstarValue(temp, sType){
+    value = getHeuristic(temp[temp.length - 1]);
+    if(sType == 1){
+        value += temp.length;
+    }
+    for(x = 0; x < frontier.length; x++){
+        if( value < frontier[x][0]){
+            frontier.splice(x, 0, [value, temp]);
+            return;
+        }
+    }
+    frontier.push([value, temp]);
+}
+
+function getHeuristic(posEl){
+    tempRow = Math.floor(posEl / numberCols);
+    tempCol = posEl - tempRow * numberCols;
+    endRow = Math.floor(idsEndPoint / numberCols);
+    endCol = idsEndPoint - endRow * numberCols;
+    
+    hValue = Math.pow(endCol - tempCol, 2) + Math.pow(endRow - tempRow, 2);
+    hValue = Math.sqrt(hValue);
+    return hValue;
+}
+
+function AstarUpdate(){
+    if (frontier.length == 0){
+        cancelFun();
+        return;
+    }
+    //Take top path list off of the frontier, make it current path(pathNode), make last of path current pos and set as visited
+    topPath = frontier[0];
+    frontier.splice(0, 1);
+    currentPos = topPath[1][topPath[1].length - 1];
+    elementArray[currentPos].visited = true;
+    if (elementArray[currentPos].endPoint == true){
+        stepCounter += 1;
+        for (x of topPath[1]){
+            elementArray[x].finalPath = true;
+        }
+        updateGameArea();
+        frontier = [];
+        cancelFun();
+        return;
+    }
+    
+    //expand left/right/top/down if element not exist in explored, add new created paths to end of frontier
+    temp = expandDirection(topPath[1].slice(), "top");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            addAstarValue(temp, 1);
+        }
+    }
+    temp = expandDirection(topPath[1].slice(), "left");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            addAstarValue(temp, 1);
+        }
+    }
+    temp = expandDirection(topPath[1].slice(), "bot");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            addAstarValue(temp, 1);
+        }
+    }
+    temp = expandDirection(topPath[1].slice(), "right");
+    if(temp != null){
+        if(elementArray[temp[temp.length - 1]].reachNumber > temp.length || elementArray[temp[temp.length - 1]].reachNumber == -1){
+            elementArray[temp[temp.length - 1]].reachNumber = temp.length;
+            addAstarValue(temp, 1);
+        }
+    }
+    
+    //If expanded element is endpoint, set correct path, currentPos = endpoint, empty frontier
+    
+    stepCounter += 1;
+    skipCounter += 1;
+    if(skipCounter != skipSpeed){
+        BFSUpdate();
+    }else{
+        updateGameArea();
+        skipCounter = 0;
     }
 }
 
