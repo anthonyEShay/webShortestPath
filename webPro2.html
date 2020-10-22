@@ -39,8 +39,9 @@
 		</div>
 		<div id="bodyText">
             <h3>About the Pathing Program</h3>
-            <p>This web based program is created entirely with Html and JavaScript. It was designed to teach students new to algorithms about some of the most common tree / graph searching algorithms in computer science. The program is able to do this by providing a visual reference of the data being worked on as well as a red box signifying where actions are currently taking place. Along with a short description about each algorithm this program is designed to show how those algorithms work behind the scene to trace through a given set of data in order to find the target element.</p>
-            <p>The program visualizes all elements as colored squares. Unvisited elements are grey, visited are green, walls are black, starting point is yellow, endpoint is red, and the path is blue. Each pathing algorithm has been broken down to it’s most basic step so that the data can be progressed through the algorithm one iteration at a time. Some of the algorithms, like IDS, appear to run much slower than they would in practice due to showing every single step of the DFS algorithm.</p>
+            <p>This web based program is created entirely with Html and JavaScript. It was designed to teach students new to algorithms about some of the most common tree / graph searching algorithms in computer science. The program is able to do this by providing a visual reference of the data being worked on as well as a red box signifying where actions are currently taking place. Each type of searching algorithm a user can choose has a short a short description about the algorithm as well as some details about how those algorithms work behind the scene to trace through a given set of data in order to find the target element.</p>
+            
+            <p>The program visualizes all elements as colored squares. Unvisited elements are grey, visited are green, walls are black, starting point is yellow, endpoint is red, and the path is blue. Each pathing algorithm has been broken down to it’s most basic step so that the data can be progressed through the algorithm one iteration at a time. Some of the algorithms, like IDS and BIDS, appear to run much slower than they would in practice due to showing every single step of the DFS algorithm.</p>
             
             <div id="pathText"></div>
             <div style="float: left; width: 20%">Pathing Type: <select name="sortType" id="pathT">
@@ -114,14 +115,34 @@
         }
         
         buttonClick = false;
+        var globeIdNum = 0;
         
         async function chooseLayout(){
+            let IdNum = Math.floor(Math.random() * 10000) + 1;
+            if(IdNum == globeIdNum){
+                IdNum++;
+            }
+            globeIdNum = IdNum;
+            console.log("GN: " + globeIdNum + " ID: " + IdNum);
             startGame(document.getElementById("pathDens").value, document.getElementById("pathT").value, "User");
             document.getElementById("test3").innerHTML = "<b>&emsp;Pick a starting square</b>";
+            dragTracking = false;
+            dragCounter = 0;
+            dragCondition = false;
+            dragPosition = [-1, -1, -1, false];
             lastClick[0] = false;
             while(lastClick[0] == false){
                 await sleep(100);
+                if(globeIdNum != IdNum){
+                    console.log("Start Point");
+                    return;
+                }
             }
+            if(globeIdNum != IdNum){
+                console.log("Start Point");
+                    return;
+            }
+            console.log("GN: " + globeIdNum + " ID: " + IdNum);
             spot = lastClick[1]
             elementArray[spot].startPoint = true;
             currentPos = spot;
@@ -131,18 +152,31 @@
             lastClick[0] = false;
             while(lastClick[0] == false){
                 await sleep(100);
+                if(globeIdNum != IdNum){
+                    console.log("End Point");
+                    return;
+                }
             }
+            if(globeIdNum != IdNum){
+                console.log("End Point");
+                    return;
+            }
+            console.log("GN: " + globeIdNum + " ID: " + IdNum);
             spot = lastClick[1]
             elementArray[spot].endPoint = true;
             updateGameArea();
             
-            document.getElementById("test3").innerHTML = "<b>&emsp;Drag to draw walls, click to pick or revert single square</b>";
+            document.getElementById("test3").innerHTML = "<b>&emsp;Click and drag to draw walls, click to pick or revert single square</b>";
             document.getElementById("test4").innerHTML = "&emsp;&emsp;<button type='button' onclick='customStart()'>Start</button>";
             
             buttonClick = false;
             dragTracking = true;
             lastClick[0] = false;
             while (buttonClick == false){
+                if(globeIdNum != IdNum){
+                    console.log("Wall Point");
+                        return;
+                }
                 if(lastClick[0] == true && !dragCondition){
                     spot = lastClick[1];
                     lastClick[0] = false;

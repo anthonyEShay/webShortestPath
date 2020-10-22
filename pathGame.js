@@ -25,32 +25,32 @@ function adjustBoxes(numBoxes, mapSize, atype){
     numberLevels = mapSize - Math.floor(.5*density);
     numberLevels = numberLevels/(density + Math.floor(.5*density));
     overage = Math.ceil(numberLevels) * (density + Math.floor(.5*density)) - (mapSize - 2);
+    underage = Math.floor(numberLevels) * (density + Math.floor(.5*density)) - (mapSize - 2);
     
-    console.log(overage + " " + Math.ceil(numberLevels) + " " + density*1.5);
-    console.log(Math.floor(.35*density - 2)*Math.ceil(numberLevels));
+    console.log("Over: " + overage + " " + Math.ceil(numberLevels) + "  Den: " + density + "  " + density*1.5);
+    console.log("Under: " + underage);
+    console.log("White: " + Math.floor(.35*density - 2)*Math.ceil(numberLevels)); //How much white space is available to be used
     
-    yFix = 0;
+    if (Math.abs(underage) < Math.floor(.5*density)){
+        returnList = [Math.floor(numberLevels), density, boxDensity];
+        return returnList;
+    }
+    
     if ( overage >= Math.floor(.35*density - 2)*Math.ceil(numberLevels)){
         numberLevels = Math.floor(numberLevels);
+        console.log("Too Small");
+        returnList = [numberLevels, density, boxDensity];
     }else{
         numberLevels = Math.ceil(numberLevels);
-        while(true){
-            yFix += 1;
-            if (yFix * numberLevels >= overage){
-                break;
-            }
+        spaceLeft = (mapSize - 2) - (density)*numberLevels;
+        density = Math.floor(spaceLeft/numberLevels);
+        spaceLeft = (mapSize - 2) - (boxDensity + density)*numberLevels;
+        if (spaceLeft > boxDensity + density){
+            addLevels = Math.floor(spaceLeft / (boxDensity + density));
+            numberLevels += addLevels;
         }
-        while (true){
-            overage = Math.ceil(numberLevels) * (density + Math.floor(.5*density) - yFix) - (mapSize - 2);
-            if(overage < 0 && overage * -1 > (density + Math.floor(.5*density) - yFix)){
-                numberLevels += 1;
-            }else{
-                break;
-            }
-        }
-        density = density - yFix;
+        returnList = [numberLevels, density*2, boxDensity];
     }
-    returnList = [numberLevels, density, boxDensity];
     return returnList;
 }
 
@@ -117,12 +117,12 @@ function startGame(numElements, gameType, mapType) {
     for (a = 0; a < numberRows; a++){
         for (i = 0; i < numberCols; i++){
             temp = new component(xValues[2], xValues[2], "gray", xPosition, yPosition, numCounter);
-            xPosition += xValues[1] + Math.floor(xValues[1]/2);
+            xPosition += xValues[2] + Math.floor(xValues[1]/2);
             elementArray.push(temp);
             numCounter += 1;
         }
         xPosition = Math.floor(xValues[1]/2);
-        yPosition += xValues[1] + Math.floor(yValues[1]/2);
+        yPosition += xValues[2] + Math.floor(yValues[1]/2);
     }
     
     console.log("Levels: " + numberLevels + " Total: " + elementArray.length);
